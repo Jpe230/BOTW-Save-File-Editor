@@ -9,12 +9,12 @@ A Work in Progress Save Editor, currently it only to modifies rupees/arrows.
 -Open the Save Editor and select your save file slot.  
 -Use DPAD UP/Down to Increase/Decrease the integer.  
 -Use L/R to move between items.
--Press A to Commit Changes
--Restore Save File using Checkpoint
+-Press A to Commit Changes.  
+-Restore Save File using Checkpoint.  
 
 # Compile
 
--Use LibNX
+-Use LibNX.  
 
 # TODO
 
