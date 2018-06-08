@@ -1,6 +1,6 @@
 # Legend of Zelda Breath of the Wild Save File Editor (WIP)
 
-<img style="float: right;" src="icon.jpg">
+<img style="float: right;" src="meta/icon.jpg">
 
 A Work in Progress Save Editor, currently it only to modifies rupees, durability of weapons & arrows.  
 Currently it only works in v1.5.  
