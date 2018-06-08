@@ -30,12 +30,15 @@ int slot = 0;
 
 long int rupees;
 
-int rupID = 0x00eaf8;
-int itemsID = 0x060408;
-int itemsQuant = 0x0711c8;
+int rupID[7]      = {0x00e0a0, 0x00e110, 0x00e110, 0x00e678, 0x00e730, 0x00eaf8, 0x00eaf8};
+int itemsID[7]    = {0x052828, 0x0528d8, 0x0528c0, 0x053890, 0x05fa48, 0x060408, 0x060408};
+int itemsQuant[7] = {0x063340, 0x0633f0, 0x0633d8, 0x064550, 0x070730, 0x0711c8, 0x0711c8};
+int header[7]     = {0x24e2, 0x24ee, 0x2588, 0x29c0, 0x3ef8,  0x471a,  0x471b};
+char versionArray[7][5]  = {"1.0",  "1.1",  "1.2",  "1.3", "1.3.3",  "v1.4",  "v1.5"};
 
 
 int maxArrows = 999;
+int version;
 
 
 
@@ -128,7 +131,7 @@ void confirmButton(){
 		consoleClear();
 		if(rupeeValue != rupees){
 			printf("Set Rupees = %d\n", rupeeValue);
-			fseek(fp,rupID,SEEK_SET);
+			fseek(fp,rupID[version],SEEK_SET);
 			fwrite(&rupeeValue, sizeof(long int), 1, fp);
 		}
 
@@ -140,7 +143,7 @@ void confirmButton(){
 					}
 				}
 				printf("Set %s = %d\n", translate(itemName[x]), newQuantItems[x]);
-				fseek(fp, itemsQuant + (8 * x),SEEK_SET);
+				fseek(fp, itemsQuant[version] + (8 * x),SEEK_SET);
 				fwrite(&newQuantItems[x], sizeof(int), 1, fp);
 			}
 		}
@@ -321,7 +324,7 @@ void setItem(){
 	if(currentItem > numberOfItems) currentItem = numberOfItems;
 	if(currentItem < 1) currentItem = 1;
 
-
+	printf("BOTW Version: %s\n", versionArray[version]);
 	printf("(Item no: %d)\n", currentItem);
 
 	if(currentItem == 1){
@@ -358,8 +361,18 @@ void setItem(){
 
 void getData(){
 
+	int readHeader;
+	fread(&readHeader, sizeof(int), 1, fp);
+	
+	for(version = 0; version<7; version++){
+		
+		if(readHeader == header[version]){
+			break;
+		}
+		
+	}
 
-	fseek(fp,rupID,SEEK_SET);
+	fseek(fp,rupID[version],SEEK_SET);
 	fread(&rupees, sizeof(long int), 1, fp);
 	rupeeValue = rupees;
 	int endOfItems = 0;
@@ -369,7 +382,7 @@ void getData(){
 		int offset = (y * 128);
 		for(int x = 0; x < 5; x++){
 			char tmpString[5];
-			fseek(fp, itemsID + (8 * x) + offset,SEEK_SET);
+			fseek(fp, itemsID[version] + (8 * x) + offset,SEEK_SET);
 			fread(&tmpString, sizeof(int), 1, fp);
 
 			if(tmpString[strlen(tmpString) - 1] == 2){
@@ -384,7 +397,7 @@ void getData(){
 		if(endOfItems == 1)
 			break;
 
-		fseek(fp, itemsQuant + (8 * y),SEEK_SET);
+		fseek(fp, itemsQuant[version] + (8 * y),SEEK_SET);
 		fread(&quantItems[y], sizeof(int), 1, fp);
 		newQuantItems[y] = quantItems[y];
 		numberOfItems++;
