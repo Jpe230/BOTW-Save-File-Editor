@@ -39,6 +39,7 @@ EXEFS_SRC	:=	exefs_src
 APP_TITLE	:=	BOTW Save Editor
 APP_AUTHOR	:=	Jpe230
 APP_VERSION	:=	0.1
+ICON        :=  meta/icon.jpg
 
 #---------------------------------------------------------------------------------
 # options for code generation
