@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <switch.h>
 
+#include "translations.h"
+
 
 
 //Functions Prototypes
@@ -9,14 +11,16 @@ void confirmButton();
 void intTextbox(int c);
 void setFile();
 void setItem();
+void getData();
+int power(int x, int y);
 
 
+long int rupeeValue;
 
-int newValues[6] = {0,0,0,0,0,0};
-int arrowValues[6][3] = {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}};
-
-
-char arrowName[6][13] = {"Arrow", "Fire Arrow", "Ice Arrow", "Shock Arrow", "Bomb Arrow", "Ancient Arrow"};
+char itemName[50][40];
+long int quantItems[50];
+long int newQuantItems[50];
+int numberOfItems;
 
 
 int selector = 0;
@@ -25,14 +29,14 @@ int currentItem = 0;
 int slot = 0;
 
 long int rupees;
-long int arrowCount[6] = {0,0,0,0,0,0};
 
 int rupID = 0x00eaf8;
-int arrowsID = 0x071258;
+int itemsID = 0x060408;
+int itemsQuant = 0x0711c8;
 
 
-long int new_rupees;
-long int newArrows;
+int maxArrows = 999;
+
 
 
 FILE *fp;
@@ -65,6 +69,7 @@ int main(int argc, char **argv)
         if(kDown & KEY_L){
         	if(currentItem != 0){
         		currentItem--;
+        		selector = 0;
         		setItem();
         	}
         	
@@ -73,6 +78,7 @@ int main(int argc, char **argv)
         if(kDown & KEY_R){
         	if(currentItem != 0){
         		currentItem++;
+        		selector = 0;
         		setItem();
         	}
         	
@@ -93,11 +99,61 @@ int main(int argc, char **argv)
 }
 
 
+int getDigit(int num, int n){
+	
+	int r, t1, t2;
+ 
+    t1 = power(10, n+1);
+    r = num % t1;
+ 
+    if (n > 0)
+    {
+        t2 = power(10, n);
+        r = r / t2;
+    }
+ 
+    return r;
+}
+
+
+void confirmButton(){
+	if(isSlotSelected == 0 && currentItem == 0){
+		currentItem = 1;
+		isSlotSelected = 1;
+		setFile();
+	
+	}
+
+	else{
+		consoleClear();
+		if(rupeeValue != rupees){
+			printf("Set Rupees = %d\n", rupeeValue);
+			fseek(fp,rupID,SEEK_SET);
+			fwrite(&rupeeValue, sizeof(long int), 1, fp);
+		}
+
+		for(int x = 0; x < numberOfItems; x++){
+			if(newQuantItems[x] != quantItems[x]){
+				if((strcmp(translate(itemName[x]), "Arrow") == 0) || (strcmp(translate(itemName[x]), "Fire Arrow") == 0) || (strcmp(translate(itemName[x]), "Ice Arrow") == 0) || (strcmp(translate(itemName[x]), "Shock Arrow") == 0) || (strcmp(translate(itemName[x]), "Ancient Arrow") == 0) || (strcmp(translate(itemName[x]), "Bomb Arrow") == 0)){
+					if(newQuantItems[x] > 999){
+						newQuantItems[x] = 999;
+					}
+				}
+				printf("Set %s = %d\n", translate(itemName[x]), newQuantItems[x]);
+				fseek(fp, itemsQuant + (8 * x),SEEK_SET);
+				fwrite(&newQuantItems[x], sizeof(int), 1, fp);
+			}
+		}
+		printf("Press + to exit");
+	}
+}
+
+
+
 void intTextbox(int c){
 
-	switch(currentItem){
-		case 0:
-			printf("\r");
+	if(currentItem == 0){
+		printf("\r");
 			printf("%d", slot);
 			switch(c){
 				case 0:
@@ -114,141 +170,147 @@ void intTextbox(int c){
 			}
 			printf("\r");
 			printf("%d", slot);
-
-			break;
-		case 1:
-
-			printf("\r");
-			int x = 0;
-			for(x = 0; x < 6; x++){
-				printf("%d", newValues[x]);
-			}	
-			
-			switch(c){
-				case 0:
-					newValues[selector]++;
-					if(newValues[selector] == 10)
-						newValues[selector] = 0;
-					break;
-				case 1:
-					newValues[selector]--;
-					if(newValues[selector] == -1)
-						newValues[selector] = 9;
-					break;	
-				case 2:
-					selector++;
-					if(selector == 6)
-						selector = 0;
-					break;
-				case 3:
-					selector--;
-					if(selector == -1)
-						selector = 5;
-					break;
-		
-			}
-			printf("\r");
-			for(x = 0; x < 6; x++){
-				printf("%d", newValues[x]);
-			}	
-
-			break;
 	}
 
 
-	if(currentItem > 1)
-	{
-		printf("\r");
-		int x = 0;
-		for(x = 0; x < 3; x++){
-			printf("%d", arrowValues[currentItem-2][x]);
-		}	
+	
+
+	else if (currentItem == 1){
+
+		int val = 0;
+		int checkDigit = 0;
 		
+		setItem();
+		printf("\r");
+
+		for(int x = 0; x < 6; x++){
+			if(x == selector){
+				printf("^");
+			}
+			else{
+				printf(" ");
+			}
+			
+		}
+
 		switch(c){
 			case 0:
-				arrowValues[currentItem-2][selector]++;
-				if(arrowValues[currentItem-2][selector] == 10)
-					arrowValues[currentItem-2][selector] = 0;
+				val = power(10, (5-selector));
+				checkDigit = getDigit(rupeeValue, 5-selector);
+				if((checkDigit + 1) == 10){
+					int newval = -1 * (val * 10);
+					rupeeValue += newval;
+				}
+				rupeeValue += val;
 				break;
 			case 1:
-				arrowValues[currentItem-2][selector]--;
-				if(arrowValues[currentItem-2][selector] == -1)
-					arrowValues[currentItem-2][selector] = 9;
+				val = (-1) * power(10, (5-selector));
+				
+				checkDigit = getDigit(rupeeValue, 5-selector);
+				
+				if((checkDigit - 1) == -1){
+					int newval = -1 * (val * 10);
+					rupeeValue += newval;
+				}
+				rupeeValue += val;
 				break;	
 			case 2:
 				selector++;
-				if(selector == 3)
+				if(selector == 6)
 					selector = 0;
 				break;
 			case 3:
 				selector--;
 				if(selector == -1)
-					selector = 2;
+					selector = 5;
 				break;
 	
 		}
-		printf("\r");
-		for(x = 0; x < 3; x++){
-			printf("%d", arrowValues[currentItem-2][x]);
-		}	
+		setItem();
 
 	}
 
+
+
+	else if(currentItem > 1){
+
+		int val = 0;
+		int checkDigit = 0;
+		
+		setItem();
+		printf("\r");
+
+		for(int x = 0; x < 6; x++){
+			if(x == selector){
+				printf("^");
+			}
+			else{
+				printf(" ");
+			}
+			
+		}
+
+		switch(c){
+			case 0:
+				val = power(10, (5-selector));
+				checkDigit = getDigit(newQuantItems[currentItem-2], 5-selector);
+				if((checkDigit + 1) == 10){
+					int newval = -1 * (val * 10);
+					newQuantItems[currentItem-2] += newval;
+				}
+				newQuantItems[currentItem-2] += val;
+				break;
+			case 1:
+				val = (-1) * power(10, (5-selector));
+				
+				checkDigit = getDigit(newQuantItems[currentItem-2], 5-selector);
+				
+				if((checkDigit - 1) == -1){
+					int newval = -1 * (val * 10);
+					newQuantItems[currentItem-2] += newval;
+				}
+				newQuantItems[currentItem-2] += val;
+				break;	
+			case 2:
+				selector++;
+				if(selector == 6)
+					selector = 0;
+				break;
+			case 3:
+				selector--;
+				if(selector == -1)
+					selector = 5;
+				break;
+	
+		}
+		setItem();
+
+	}
+			
+	
+	
 }
 
 
-void confirmButton(){
-
-	if(isSlotSelected == 0 && currentItem == 0){
-		currentItem = 1;
-		isSlotSelected = 1;
-		setFile();
-	
-	}
-	else{
-
-		consoleClear();
-
-		int isWritten = 0;
-		for(int x = 0; x < 6; x++){
-			if(newValues[x] != 0){
-				isWritten = 1;
-				break;
-			}
-		}
-
-		if(isWritten == 1){
-			new_rupees = (newValues[0] * 100000) + (newValues[1] * 10000) + (newValues[2] * 1000) + (newValues[3] * 100) + (newValues[4] * 10) + newValues[5];	
-			fseek(fp,rupID,SEEK_SET);
-			fwrite(&new_rupees, sizeof(long int), 1, fp);
-			printf("%u Rupees set!\n", new_rupees);
-		}
 
 
-		isWritten = 0;
 
-		for(int x = 0; x < 6; x++){
-			for(int y = 0; y < 3; y++){
-				if(arrowValues[x][y] != 0){
-					isWritten = 1;
-					break;
-				}
-			}
+int power(int x, int y){
 
-			if(isWritten == 1){
-				newArrows = (arrowValues[x][0] * 100) + (arrowValues[x][1] * 10) + arrowValues[x][2];
-				fseek(fp,arrowsID + (x * 8),SEEK_SET);
-				fwrite(&newArrows, sizeof(int), 1, fp);
-				printf("%u %s set!\n", newArrows, arrowName[x]);
-			}
-		}
-
+	int powered = x;
+	if(y == 0){
+		powered = 1;
+		return powered;
 	}
 
+	int a;
 
-	selector = 0;
-		
-	
+	for(a = 0; a < y-1; a++){
+		powered = powered*10;
+	}
+
+	return powered;
+
 }
 
 
@@ -256,44 +318,82 @@ void setItem(){
 
 	consoleClear();
 
-	if(currentItem > 7) currentItem = 7;
+	if(currentItem > numberOfItems) currentItem = numberOfItems;
 	if(currentItem < 1) currentItem = 1;
 
 
-	switch(currentItem){
+	printf("(Item no: %d)\n", currentItem);
 
-		case 1:
-			fseek(fp,rupID,SEEK_SET);
-			fread(&rupees, sizeof(long int), 1, fp);
-			printf("Current Ruppes: %u \n\n", rupees);
-			printf("Enter your new ruppes quant. (Use DPad UP/Down to Increase/Decrease)\n");
-			for(int x = 0; x < 6; x++){
-				printf("%d", newValues[x]);
-			}	
-			break;
+	if(currentItem == 1){
+		
+		printf("Current Rupees: %u \n\n", rupees);
+		printf("Enter your new rupees quant. (Use DPad UP/Down to Increase/Decrease)\n");
+		printf("%06d\n", rupeeValue);	
 
 	}
 
 
 	if(currentItem > 1){
-
-		fseek(fp, arrowsID + ((currentItem - 2) * 8), SEEK_SET);
-		fread(&arrowCount[currentItem-2], sizeof(long int), 1, fp);
-		printf("Current %s: %u \n\n", arrowName[currentItem-2] , arrowCount[currentItem-2]);
-		printf("Enter your new arrows quant. (Use DPad UP/Down to Increase/Decrease) \n");
-		for(int x = 0; x < 3; x++){
-			printf("%d", arrowValues[currentItem-2][x]);
-		}	
+		printf("Current %s: %u \n\n", translate(itemName[currentItem-2]), quantItems[currentItem-2]);
+		printf("Enter your new quant: (Use DPad UP/Down to Increase/Decrease) \n");
+		printf("%06d\n", newQuantItems[currentItem-2]);
 		
 	}
 
-	selector = 0;
+
+	for(int x = 0; x < 6; x++){
+			if(x == selector){
+				printf("^");
+			}
+			else{
+				printf(" ");
+			}
+			
+		}
+
+	//selector = 0;
 	
 }
 
 
-void setFile(){
+void getData(){
 
+
+	fseek(fp,rupID,SEEK_SET);
+	fread(&rupees, sizeof(long int), 1, fp);
+	rupeeValue = rupees;
+	int endOfItems = 0;
+	
+	for(int y = 0; y < 50 ;y++){
+		
+		int offset = (y * 128);
+		for(int x = 0; x < 5; x++){
+			char tmpString[5];
+			fseek(fp, itemsID + (8 * x) + offset,SEEK_SET);
+			fread(&tmpString, sizeof(int), 1, fp);
+
+			if(tmpString[strlen(tmpString) - 1] == 2){
+				tmpString[strlen(tmpString) - 1] = 0;
+			}
+
+			sprintf(itemName[y] + strlen(itemName[y]),"%s", tmpString);
+			
+			if(strcmp(itemName[y],"Armo")==0)
+				endOfItems = 1;
+		}
+		if(endOfItems == 1)
+			break;
+
+		fseek(fp, itemsQuant + (8 * y),SEEK_SET);
+		fread(&quantItems[y], sizeof(int), 1, fp);
+		newQuantItems[y] = quantItems[y];
+		numberOfItems++;
+	}	
+
+}
+
+
+void setFile(){
 
 	char file_name[256];
 	char header[] = "Checkpoint/saves/0x01007EF00011E000 The Legend of Zelda  Breath of the Wild/botw/";
@@ -311,8 +411,13 @@ void setFile(){
 
 
 	else{
+		getData();
 		setItem();	
 	}
 	
 }
+
+
+
+
 
