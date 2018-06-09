@@ -3,7 +3,7 @@
 #include <switch.h>
 
 #include "translations.h"
-
+#include "mount.h"
 
 
 //Functions Prototypes
@@ -33,7 +33,7 @@ long int rupees;
 int rupID[7]      = {0x00e0a0, 0x00e110, 0x00e110, 0x00e678, 0x00e730, 0x00eaf8, 0x00eaf8};
 int itemsID[7]    = {0x052828, 0x0528d8, 0x0528c0, 0x053890, 0x05fa48, 0x060408, 0x060408};
 int itemsQuant[7] = {0x063340, 0x0633f0, 0x0633d8, 0x064550, 0x070730, 0x0711c8, 0x0711c8};
-int header[7]     = {0x24e2, 0x24ee, 0x2588, 0x29c0, 0x3ef8,  0x471a,  0x471b};
+int header[7]     = {0x24e2,   0x24ee,   0x2588,   0x29c0,   0x3ef8,   0x471a,   0x471b};
 char versionArray[7][5]  = {"1.0",  "1.1",  "1.2",  "1.3", "1.3.3",  "v1.4",  "v1.5"};
 
 
@@ -89,6 +89,8 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS){
         	fclose(fp);
+    		unmountSaveData();
+    		fsdevUnmountDevice("save");
         	break;
         } 
 
@@ -147,6 +149,8 @@ void confirmButton(){
 				fwrite(&newQuantItems[x], sizeof(int), 1, fp);
 			}
 		}
+		fclose(fp);
+    	unmountSaveData();
 		printf("Press + to exit");
 	}
 }
@@ -408,8 +412,11 @@ void getData(){
 
 void setFile(){
 
-	char file_name[256];
-	char header[] = "Checkpoint/saves/0x01007EF00011E000 The Legend of Zelda  Breath of the Wild/botw/";
+
+	mountSaveData();
+	char file_name[75];
+	//char file_name[] = "save:/0/game_data.sav";
+	char header[] = "save:/";
 	char footer[] = "/game_data.sav";
 
 	snprintf(file_name, sizeof file_name, "%s%d%s", header, slot, footer);
